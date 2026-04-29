@@ -994,7 +994,19 @@ function renderTablaHistorial(data) {
     }).join('');
 }
 
-
+function ejecutarImpresion() {
+    // Intentamos dar foco a la ventana para bypass de seguridad básica
+    window.focus();
+    
+    try {
+        // Ejecutar impresión
+        window.print();
+    } catch (e) {
+        console.error("Error de impresión en sandbox:", e);
+        // Mensaje de ayuda si el sandbox bloquea la acción
+        alert("El entorno de previsualización bloquea la impresión automática. Por favor, descarga el archivo .html y ábrelo directamente en tu navegador (Chrome/Edge) para imprimir.");
+    }
+}
 
 
 
@@ -1020,6 +1032,8 @@ function renderTablaHistorial(data) {
 
         empresaDesarrolloSelect.addEventListener('change', () => { otraEmpresaInput.classList.toggle('hidden', empresaDesarrolloSelect.value !== 'Otra'); });
         window.onload = checkSession;
+
+		
     </script>
 </body>
 </html>
