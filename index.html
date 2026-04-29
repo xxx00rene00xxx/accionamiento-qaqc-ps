@@ -60,6 +60,68 @@
             filter: blur(5px);
         }
    
+@media print {
+
+
+      /* 1. Ocultar todo lo innecesario */
+    nav, footer, #sync-fab, .hero-section, button, .no-print, 
+    #btn-login-action, .form-locked-overlay {
+        display: none !important;
+    }
+        no-print {
+            display: none !important;
+        }
+    /* 2. Reducción agresiva de fuentes y márgenes */
+    body {
+        background-color: white !important;
+        font-size: 8.5pt !important; /* Tamaño de lectura técnica estándar */
+        color: black !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* 3. Forzar contenedor a ancho total */
+    main, #view-form-tab, .container {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 5mm !important; /* Margen mínimo de seguridad para impresoras */
+    }
+
+    /* 4. Compactar tarjetas de secciones */
+    .bg-white {
+        border: 1px solid #ddd !important;
+        padding: 6px !important; /* Espacio interno mínimo */
+        margin-bottom: 4px !important; /* Espacio entre secciones reducido */
+        border-radius: 4px !important;
+        box-shadow: none !important;
+        page-break-inside: avoid; /* No corta secciones por la mitad */
+    }
+
+    /* 5. Distribución de columnas optimizada */
+    .grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important; /* Forzar 3 columnas en papel */
+        gap: 4px !important;
+    }
+
+    /* 6. Inputs y Checkboxes miniatura */
+    input, select, textarea {
+        font-size: 8pt !important;
+        padding: 1px 3px !important;
+        border: 1px solid #ccc !important;
+        height: auto !important;
+    }
+
+    input[type="checkbox"] {
+        width: 12px !important;
+        height: 12px !important;
+        margin-right: 4px !important;
+    }
+
+    /* 7. Eliminar títulos grandes */
+    h1, h2 { font-size: 11pt !important; margin-bottom: 4px !important; }
+    h3 { font-size: 9pt !important; margin-bottom: 2px !important; }
 
 
 
@@ -271,6 +333,12 @@
                 </div>
 
                 <form id="checklist-form" class="space-y-6">
+					                    <div class="flex justify-end my-6">
+    <button type="button" onclick="ejecutarImpresion()" 
+            class="bg-white border-2 border-[#EA7600] text-[#EA7600] font-black px-6 py-3 rounded-2xl uppercase text-[15px] tracking-widest hover:bg-[#EA7600] hover:text-white transition-all">
+        <i class="fas fa-print mr-2"></i> Imprimir Reporte
+    </button>
+</div>
                     <input type="hidden" id="edit-id" value="">
                     <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                         <div class="flex justify-between items-start mb-8 border-b border-slate-50 pb-6">
