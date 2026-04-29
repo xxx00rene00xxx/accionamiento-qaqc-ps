@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist Mantenimiento PS - Gestión de Auditoría Completa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/ZRxbpbzZ/logo-rodape.png">
+    <link rel="shortcut icon" href="https://i.postimg.cc/ZRxbpbzZ/logo-rodape.png">
+    <!-- Embedded Styles for Chart Containers -->
+    
+    <style>
+        input[type="checkbox"] { width: 1.5rem; height: 1.5rem; cursor: pointer; }
+        .tab-active { border-bottom: 4px solid #EA7600; background-color: rgba(30, 58, 138, 0.05); color: #EA7600 !important; }
+        .audit-list::-webkit-scrollbar { width: 4px; }
+        .audit-list::-webkit-scrollbar-thumb { background: #ffffff; border-radius: 10px; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background:   #EA7600 ;
+        }
+        .timeline-item:last-child::before { display: none; }
+        .form-locked-overlay {
+            backdrop-filter: blur(2px);
+            background: rgba(255, 255, 255, 0.5);
+        }
+        input:disabled, select:disabled, textarea:disabled {
+            cursor: not-allowed !important;
+            background-color: #f8fafc !important;
+            color: #64748b !important;
+            opacity: 1 !important;
+            border-color: #e2e8f0 !important;
+        }
+        input[type="checkbox"]:disabled {
+            filter: grayscale(1);
+            opacity: 0.5;
+        }
+
+
+        .hero-section {
+            height: 20vh;
+            background-image: url('https://i.postimg.cc/5y5CHdnr/ARAUCO-01-1.png');
+            background-repeat: no-repeat;
+            background-size: 70vh;
+            background-position: center;
+            position: relative;
+            transition: filter 0.5s ease;
+        }
+        .hero-section.blurred {
+            filter: blur(5px);
+        }
+   
+
+
+
+
+
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-12">
+
+
+
+    <!-- Sincronización Flotante -->
+    <div id="sync-fab" class="fixed bottom-8 right-8 z-[120] hidden">
+        <button onclick="confirmBulkUpdate()" class="bg-orange-600 hover:bg-orange-700 text-white font-black px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 transition-all scale-100 hover:scale-105 active:scale-95 border-4 border-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            <span class="uppercase text-xs tracking-widest">Sincronizar <span id="sync-count">0</span> Cambios</span>
+        </button>
+    </div>
+
+
+        <!-- Contenido Principal -->
+    <main class="main-content flex-1">
+        <!-- Hero Section: Desenfoque Din mico -->
+        <section class="hero-section flex items-end justify-end" id="heroSection">
+            <h1 class="text-2xl font-extrabold text-white text-shadow-lg p-4 bg-black bg-opacity-60 rounded-1g">
+                PGP 2026 - Reporte QAQC
+            </h1>
+        </section>
+  <!-- Main Container -->
+	<main class="max-w-[90%] mx-auto px-2 py-10">
+
+        <!-- Header Section -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#696158] mb-4">
+                 Reportes QAQC Mantención PS- PGP 2026
+            </h1>
+            <p class="text-2xl text-[#696158] max-w-3xl mx-auto">
+                Unidad DCS & Accionamiento - Celulosa Arauco Planta Constitución 
+            </p>
+
+			</div>
+
+
+
+                 <p ></p>
+				 <p ></p>
+				 <p ></p>
+                 <p ></p>
+				 <p ></p>
+				 <p ></p>
+            </div>
+ 
+			</div>
+
+
+  </header>
+
+
+
+
+
+    <div id="login-modal" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md relative">
+            <button onclick="toggleLoginModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">✕</button>
+            <div class="text-center mb-8">
+                <div class="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-[#EA7600]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                </div>
+                <h1 class="text-2xl font-black text-[#696158] uppercase tracking-tighter">Acceso Técnico</h1>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase mb-1">Usuario</label>
+                    <div class="relative flex items-center">
+                        <input type="text" id="login-username" required placeholder="ej: j.perez" class="mt-1 block w-full p-3 pr-40 border rounded-xl bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500 font-bold">
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs mt-0.5">@alarms-report.com</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-gray-500 uppercase mb-1">Contraseña</label>
+                    <input type="password" id="login-password" required class="mt-1 block w-full p-3 border rounded-xl bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-[#696158] text-white font-bold py-3 rounded-xl uppercase text-xs tracking-widest mt-4">Validar Credenciales</button>
+                <div id="login-error" class="text-red-500 text-[10px] text-center hidden font-black mt-2 uppercase">Error de credenciales</div>
+            </form>
+        </div>
+    </div>
+
+    <div id="delete-modal" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-xs relative text-center">
+            <h2 class="text-lg font-black text-slate-800 uppercase mb-2">¿Eliminar Registro?</h2>
+            <div class="flex gap-3 justify-center mt-6">
+                <button onclick="cancelDelete()" class="px-5 py-3 bg-slate-100 text-slate-600 font-black rounded-xl uppercase text-[10px]">Cancelar</button>
+                <button onclick="executeDelete()" class="px-5 py-3 bg-red-600 text-white font-black rounded-xl uppercase text-[10px]">Sí, Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-content">
+       
+		<nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center gap-2">
+                        
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div id="auth-status" class="hidden md:block text-[15px] font-black uppercase px-3 py-1 rounded-full bg-slate-100 text-slate-500">Visitante</div>
+                        <button id="btn-login-action" onclick="handleAuthAction()" class="text-[15px] bg-white border-2 border- [#696158] text-[#696158] px-4 py-1.5 rounded-xl font-black uppercase hover:bg-[#696158] hover:text-white">Login</button>
+                    </div>
+                </div>
+
+   
+            <div class="flex justify-end items-center py-4 gap-4">
+
+             <button onclick="window.location.href='https://accionamiento-pgp-2026.vercel.app/'" class="bg-white border-2 border-[#EA7600] text-[#EA7600] font-black px-6 py-3 rounded-2xl uppercase text-[15px] tracking-widest hover:bg-[#EA7600] hover:text-white transition-all">
+               Programación PGP2026                 </button>
+
+            <button onclick="window.location.href='https://accionamiento-qaqc.vercel.app/'" class="bg-white border-2 border-[#EA7600] text-[#EA7600] font-black px-6 py-3 rounded-2xl uppercase text-[15px] tracking-widest hover:bg-[#EA7600] hover:text-white transition-all">
+               QAQC VDF (Indamax)                 </button>
+
+                </div>
+
+
+                <div class="flex space-x-6">
+                    <button onclick="switchTab('dashboard-tab')" id="btn-dashboard-tab" class="px-2 py-3 font-black transition tab-active uppercase text-[15px] tracking-widest text-[#696158]">Dashboard QAQC</button>
+                    <button onclick="switchTab('history-tab')" id="btn-history-tab" class="px-2 py-3 font-black transition  uppercase text-[15px] tracking-widest text-[#696158]">Historial General</button>
+                    <button onclick="handleNewChecklistBtn()" id="btn-form-tab" class="px-2 py-3 font-black transition uppercase text-[15px] tracking-widest text-[#696158]">Nuevo Registro</button>
+                </div>
+            </div>
+            
+        </nav>
+
+        <div class="w-[100%] mx-auto px-4 mt-8 ">
+            <div id="message-box" class="hidden mb-6 p-4 rounded-xl shadow-sm border-l-4 font-black text-xs uppercase tracking-widest"></div>
+
+            <div id="view-dashboard-tab" class=" space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
+                        <h3 class="text-[10px] font-black text-[#696158] uppercase mb-4">Avance Global QAQC</h3>
+                        <div class="relative w-32 h-32">
+                            <svg class="w-full h-full" viewBox="0 0 36 36">
+                                <path class="text-slate-100" stroke-width="3" fill="none" stroke="currentColor" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path id="chart-progress-path" class="text-blue-600 transition-all duration-1000" stroke-width="3" stroke-dasharray="0, 100" stroke-linecap="round" fill="none" stroke="currentColor" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <text x="18" y="20.35" class="font-black text-[7px] text-[#696158]" text-anchor="middle" id="chart-percentage">0%</text>
+                            </svg>
+                        </div>
+                        <p class="text-[9px] font-black text-[#696158] mt-4 uppercase" id="chart-stats-label">Cargando datos...</p>
+                    </div>
+                    <div class="md:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xs font-black text-[#696158] uppercase tracking-widest">Filtros de Control</h3>
+                            <div class="flex gap-2">
+                                <select id="filter-area" onchange="renderDashboard()" class="text-[9px] font-black border border-slate-200 rounded-lg p-2 bg-slate-50 outline-none"><option value="">TODAS LAS ÁREAS</option></select>
+                                <select id="filter-ubicacion" onchange="renderDashboard()" class="text-[9px] font-black border border-slate-200 rounded-lg p-2 bg-slate-50 outline-none"><option value="">TODAS LAS UBICACIONES</option></select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 text-center">
+                                <div class="text-[8px] font-black text-blue-400 uppercase mb-1">Total Equipos</div>
+                                <div class="text-2xl font-black text-blue-900" id="stat-total">0</div>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-2xl border border-green-100 text-center">
+                                <div class="text-[8px] font-black text-green-400 uppercase mb-1">Concluidos</div>
+                                <div class="text-2xl font-black text-green-900" id="stat-done">0</div>
+                            </div>
+                            <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-center">
+                                <div class="text-[8px] font-black text-amber-400 uppercase mb-1">En Proceso</div>
+                                <div class="text-2xl font-black text-amber-900" id="stat-pending">0</div>
+                            </div>
+                            <div class="bg-red-50 p-4 rounded-2xl border border-red-100 text-center">
+                                <div class="text-[8px] font-black text-red-400 uppercase mb-1">Sin Iniciar</div>
+                                <div class="text-2xl font-black text-red-900" id="stat-none">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="container-pendientes" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-6 bg-slate-50 border-b border-slate-100"><h3 class="text-xs font-black text-[#696158] uppercase tracking-widest">Listado de Equipos Pendientes</h3></div>
+                    <div class="overflow-x-auto max-h-[400px] audit-list">
+                        <table class="w-full text-left">
+                            <thead class="sticky top-0 bg-white shadow-sm z-10">
+                                <tr class="text-slate-400 uppercase text-[9px] font-black tracking-widest border-b border-slate-50">
+                                    <th class="px-6 py-4">Tag Equipo</th>
+                                    <th class="px-6 py-4">Área</th>
+                                    <th class="px-6 py-4">Ubicación</th>
+                                    <th class="px-6 py-4">Estado Reporte</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-pending-body" class="divide-y divide-slate-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-form-tab" class="hidden relative pb-20">
+                <div id="form-auth-lock" class="hidden absolute inset-0 z-40 flex items-start justify-center pt-20 form-locked-overlay rounded-3xl">
+                    <div class="bg-white p-6 rounded-2xl shadow-xl text-center max-w-sm">
+                        <h3 class="text-sm font-black text-[#696158] uppercase mb-2">Acceso Restringido</h3>
+                        <p class="text-[11px] text-[#696158] mb-6">Debe iniciar sesión para editar registros.</p>
+                        <button onclick="toggleLoginModal()" class="w-full bg-[#EA7600] text-white text-[10px] font-black py-3 rounded-xl uppercase tracking-widest">Iniciar Sesión</button>
+                    </div>
+                </div>
+
+                <form id="checklist-form" class="space-y-6">
+                    <input type="hidden" id="edit-id" value="">
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-start mb-8 border-b border-slate-50 pb-6">
+                            <div>
+                                <h2 class="text-xl font-black text-[#696158] uppercase tracking-tight">Reporte Técnico de Mantenimiento</h2>
+                                <p id="record-id-display" class="text-[9px] text-[#696158] font-bold mt-1 uppercase tracking-widest"></p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span id="view-only-badge" class="bg-slate-100 text-slate-500 text-[9px] px-3 py-1 rounded-full font-black uppercase border border-slate-200">Modo Visualización</span>
+                                <span id="edit-indicator" class="hidden bg-amber-100 text-amber-700 text-[9px] px-3 py-1 rounded-full font-black uppercase border border-amber-200">Edición Autorizada</span>
+                                <select name="estado" id="form-estado" class="text-[10px] font-black border-2 border-slate-100 rounded-xl p-2 bg-slate-50 outline-none">
+                                    <option value="BORRADOR">⚪ BORRADOR</option>
+                                    <option value="EN DESARROLLO">🟠 EN DESARROLLO</option>
+                                    <option value="CONCLUIDO">🟢 CONCLUIDO</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-2">
+                                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Tag del Equipo</label>
+                                    <select id="tag_equipo_select" name="tag_equipo" required class="block w-full rounded-xl border-slate-200 bg-slate-50 p-3 border font-bold text-slate-700 outline-none disabled:opacity-75"><option value="">Seleccione un Tag...</option></select>
+                                </div>
+                                <div><label class="block text-[9px] font-black text-slate-400 uppercase mb-1">OT Servicio</label><input type="text" id="ot_servicio" name="ot_servicio" readonly class="block w-full rounded-xl border-slate-200 bg-slate-100 p-3 border font-bold text-slate-500 outline-none"></div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div><label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Modelo</label><input type="text" name="modelo_equipo" class="block w-full rounded-xl border-slate-200 bg-slate-50 p-3 border font-bold text-slate-700 outline-none"></div>
+                                <div><label class="block text-[9px] font-black text-slate-400 uppercase mb-1">N° de Serie</label><input type="text" name="numero_serie" class="block w-full rounded-xl border-slate-200 bg-slate-50 p-3 border font-bold text-slate-700 outline-none"></div>
+                                <div><label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Fecha de Entrega</label><input type="date" name="fecha_entrega" required class="block w-full rounded-xl border-slate-200 bg-slate-50 p-3 border font-bold text-slate-700 outline-none"></div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div><label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Área</label><input type="text" id="area_equipo" name="area" readonly class="block w-full rounded-xl border-slate-200 bg-slate-100 p-3 border font-bold text-slate-500 outline-none"></div>
+                                <div><label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Ubicación</label><input type="text" id="ubicacion_equipo" name="ubicacion" readonly class="block w-full rounded-xl border-slate-200 bg-slate-100 p-3 border font-bold text-slate-500 outline-none"></div>
+                                <div>
+                                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Desarrollado por:</label>
+                                    <div class="flex flex-col gap-2">
+                                        <select id="empresa_desarrollo" name="empresa_cliente" required class="block w-full rounded-xl border-slate-200 bg-slate-50 p-3 border font-bold text-slate-700 outline-none transition">
+                                            <option value="Indamax">Indamax</option>
+                                            <option value="Interno">Interno</option>
+                                            <option value="Otra">Otra</option>
+                                        </select>
+                                        <input type="text" id="otra_empresa_input" placeholder="Nombre de la empresa" class="hidden block w-full rounded-xl border-slate-200 bg-slate-50 p-3 border font-bold text-slate-700 outline-none">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="sections-container" class="space-y-8"></div>
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                        <h2 class="text-xs font-black mb-6 text-[#696158] uppercase tracking-widest border-b border-slate-50 pb-4">Responsables</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div><label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Técnico Ejecutor</label><input type="text" name="ejecutado_por_nombre" required class="block w-full rounded-xl border-slate-200 bg-slate-50 p-3 border font-bold outline-none"></div>
+                            <div><label class="block text-[9px] font-black text-slate-400 uppercase mb-1">Supervisor QA/QC</label><input type="text" name="supervisor_nombre" required class="block w-full rounded-xl border-slate-200 bg-slate-50 p-3 border font-bold outline-none"></div>
+                        </div>
+                    </div>
+                    <!-- Auditoría Independiente -->
+                    <div id="report-audit-section" class="hidden bg-white text-[#696158] p-8 rounded-3xl shadow-xl">
+                        <div class="flex items-center gap-3 mb-6"><h2 class="text-xs font-black uppercase tracking-[0.2em]">Detalle de Cambios (Auditoría)</h2></div>
+                        <div id="report-timeline" class="space-y-0"></div>
+                    </div>
+                    <div class="flex justify-between items-center pt-8">
+                        <button type="button" onclick="switchTab('history-tab')" class="text-slate-400 font-black hover:text-[#696158] transition text-[9px] uppercase tracking-widest flex items-center gap-2">Volver al Listado</button>
+                        <div class="flex gap-4">
+                            <button type="button" id="cancel-edit-btn" onclick="resetFormToNew()" class="hidden text-red-500 font-black px-6 py-3 border border-red-100 rounded-xl hover:bg-red-50 transition text-[10px] uppercase">Cancelar Edición</button>
+                            <button type="submit" id="submit-btn" class="bg-[#696158] hover:bg-[#696158] text-white font-black py-4 px-12 rounded-2xl shadow-xl transition-all active:scale-95 text-[11px] tracking-widest uppercase disabled:bg-slate-300">Guardar Registro</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+<div id="view-history-tab" class="hidden">
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 grid grid-cols-2 gap-4 border-b border-slate-50 bg-slate-50">
+    <select id="filt-equipo" onchange="filtrarHistorial()" class="text-[10px] border border-slate-200 rounded-xl p-2 outline-none">
+        <option value="">Seleccione Equipo...</option>
+    </select>
+    <select id="filt-estado" onchange="filtrarHistorial()" class="text-[10px] border border-slate-200 rounded-xl p-2 outline-none">
+        <option value="">Seleccione Estado...</option>
+        <option value="CONCLUIDO">CONCLUIDO</option>
+        <option value="EN DESARROLLO">EN DESARROLLO</option>
+        <option value="BORRADOR">BORRADOR</option>
+    </select>
+</div>
+ </div>
+        <div class="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+            <h2 class="font-black text-[#696158] uppercase text-xs tracking-widest">Base de Datos de Mantenimiento</h2>
+            <button onclick="loadHistory()" class="bg-white border border-slate-200 p-2 rounded-xl text-[#EA7600]"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-slate-400 uppercase text-[9px] font-black tracking-widest border-b border-slate-50">
+                        <th class="px-6 py-4">Fecha Creación</th>
+                        <th class="px-6 py-4">Tag / Equipo de Trabajo</th>
+                        <th class="px-6 py-4">Última Modificación</th>
+                        <th class="px-6 py-4">Estado</th>
+                        <th class="px-6 py-4 text-right">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body" class="divide-y divide-slate-50"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+
+        <!-- Footer -->
+        <footer class="text-center text-slate-400 py-8 border-t border-slate-200 mt-12">
+            <p class="text-sm">Desarrollado por ROL</p>
+			<p class="text-sm">Unidad DCS & Accionamiento</p>
+        </footer>
+
+
+    <script>
+        const SUPABASE_URL = "https://rtfjfutvbwfcvlodzcbv.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_EEWPWL2h6JQ99kQQI00EjQ_-I_gAxvV"; 
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SHEET_ID = "1mLT1Z1vWm0ywzzIwKbArECa_b8dxrpMkkqbaNFvbeBg";
+        const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+
+        const loginModal = document.getElementById('login-modal');
+        const loginForm = document.getElementById('login-form');
+        const authStatus = document.getElementById('auth-status');
+        const btnLoginAction = document.getElementById('btn-login-action');
+        const historyTableBody = document.getElementById('history-table-body');
+        const sectionsContainer = document.getElementById('sections-container');
+        const form = document.getElementById('checklist-form');
+        const msgBox = document.getElementById('message-box');
+        const submitBtn = document.getElementById('submit-btn');
+        const editIndicator = document.getElementById('edit-indicator');
+        const viewOnlyBadge = document.getElementById('view-only-badge');
+        const reportTimeline = document.getElementById('report-timeline');
+        const reportAuditSection = document.getElementById('report-audit-section');
+        const formAuthLock = document.getElementById('form-auth-lock');
+        const tagEquipoSelect = document.getElementById('tag_equipo_select');
+        const otServicioInput = document.getElementById('ot_servicio');
+        const areaEquipoInput = document.getElementById('area_equipo');
+        const ubicacionEquipoInput = document.getElementById('ubicacion_equipo');
+        const empresaDesarrolloSelect = document.getElementById('empresa_desarrollo');
+        const otraEmpresaInput = document.getElementById('otra_empresa_input');
+
+        const DOMAIN = "@alarms-report.com";
+        const ADMIN_EMAIL = "admin@alarms-report.com";
+
+        let currentUser = null;
+        let tareasMaster = [];
+        let sheetData = [];
+        let currentRecordData = null; 
+        let recordToDelete = null;
+        let reportesMaster = [];
+
+        function formatDateFull(dateString) {
+            if (!dateString) return '---';
+            const d = new Date(dateString);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            return `${day}-${month}-${year} ${hours}:${minutes}`;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '---';
+            const d = new Date(dateString);
+            return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = "";
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === ',' && !inQuotes) { result.push(current.trim().replace(/^"|$"$/g, '')); current = ""; }
+                else current += char;
+            }
+            result.push(current.trim().replace(/^"|$"$/g, ''));
+            return result;
+        }
+
+        async function fetchSheetData() {
+            try {
+                const response = await fetch(SHEET_CSV_URL);
+                const text = await response.text();
+                const lines = text.split('\n');
+                sheetData = lines.slice(1).map(line => {
+                    const r = parseCSVLine(line);
+                    return { area: r[0], ot: r[4], tag: r[5], ubicacion: r[11] };
+                }).filter(r => r.tag && r.tag !== "");
+                populateTags();
+                populateDashboardFilters();
+            } catch (error) { console.error("Error cargando Google Sheet:", error); }
+        }
+
+        function populateTags() {
+            tagEquipoSelect.innerHTML = '<option value="">Seleccione un Tag...</option>';
+            sheetData.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.tag;
+                opt.textContent = item.tag;
+                tagEquipoSelect.appendChild(opt);
+            });
+        }
+
+        function populateDashboardFilters() {
+            const areas = [...new Set(sheetData.map(s => s.area))].sort();
+            const locs = [...new Set(sheetData.map(s => s.ubicacion))].sort();
+            document.getElementById('filter-area').innerHTML = '<option value="">TODAS LAS ÁREAS</option>' + areas.map(a => `<option value="${a}">${a}</option>`).join('');
+            document.getElementById('filter-ubicacion').innerHTML = '<option value="">TODAS LAS UBICACIONES</option>' + locs.map(l => `<option value="${l}">${l}</option>`).join('');
+        }
+
+        tagEquipoSelect.addEventListener('change', (e) => {
+            const selected = sheetData.find(s => s.tag === e.target.value);
+            if (selected) {
+                otServicioInput.value = selected.ot || '';
+                areaEquipoInput.value = selected.area || '';
+                ubicacionEquipoInput.value = selected.ubicacion || '';
+            }
+        });
+
+        async function checkSession() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            updateAuthUI(session?.user || null);
+            initApp();
+        }
+
+        function updateAuthUI(user) {
+            currentUser = user;
+            if (user) {
+                authStatus.textContent = user.email.toUpperCase();
+                btnLoginAction.textContent = "Salir";
+            } else {
+                authStatus.textContent = "Visitante";
+                btnLoginAction.textContent = "Login";
+            }
+        }
+
+        function toggleLoginModal() { 
+            // Limpiar campos y errores cada vez que se intenta abrir el modal de Acceso Técnico
+            loginForm.reset();
+            document.getElementById('login-error').classList.add('hidden');
+            loginModal.classList.toggle('hidden'); 
+        }
+
+        async function handleAuthAction() {
+            if (currentUser) {
+                await _supabase.auth.signOut();
+                updateAuthUI(null);
+                // Asegurar que el formulario de login esté limpio tras desloguearse
+                loginForm.reset();
+                loadHistory();
+            } else toggleLoginModal();
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const email = username.includes('@') ? username : username + DOMAIN;
+            const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+            if (error) document.getElementById('login-error').classList.remove('hidden');
+            else { updateAuthUI(data.user); toggleLoginModal(); loadHistory(); }
+        });
+
+        async function initApp() {
+            await fetchSheetData();
+            const { data: secciones } = await _supabase.from('secciones_checklist_ps_migracion').select('*').order('orden');
+            const { data: tareas } = await _supabase.from('tareas_checklist_ps_migracion').select('*').order('orden');
+            tareasMaster = tareas;
+            renderForm(secciones, tareas);
+            await loadHistory(); // Cargamos datos
+            renderDashboard();   // Renderizamos dashboard
+            switchTab('dashboard-tab'); // Aseguramos que esta pestaña sea la activa
+            loadHistory();
+            inicializarFiltros()
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('#view-form-tab, #view-history-tab, #view-dashboard-tab').forEach(d => d.classList.add('hidden'));
+            document.getElementById('view-' + tabId).classList.remove('hidden');
+            document.getElementById('btn-history-tab').classList.remove('tab-active');
+            document.getElementById('btn-form-tab').classList.remove('tab-active');
+            document.getElementById('btn-dashboard-tab').classList.remove('tab-active');
+            
+            document.getElementById('btn-' + tabId).classList.add('tab-active');
+            
+            if (tabId === 'history-tab') loadHistory();
+            else if (tabId === 'dashboard-tab') renderDashboard();
+            else if (tabId === 'form-tab') {
+                if (!document.getElementById('edit-id').value && !currentUser) formAuthLock.classList.remove('hidden');
+                else   formAuthLock.classList.add('hidden');
+            }
+        }
+
+async function loadHistory() {
+    const { data, error } = await _supabase.from('checklists_mantenimiento_ps_migracion')
+        .select(`*, historial_modificaciones_ps_migracion(usuario_email, fecha_modificacion)`)
+        .order('fecha_creacion', { ascending: false });
+    if (error) return;
+    reportesMaster = data;
+    
+    // Simplemente llamamos a la misma función de renderizado
+    renderTablaHistorial(reportesMaster);
+}
+
+ function renderDashboard() {
+    // 1. Obtener filtros
+    const filterArea = document.getElementById('filter-area').value;
+    const filterLoc = document.getElementById('filter-ubicacion').value;
+    
+    // 2. Filtrar datos
+    let filteredSheet = sheetData.filter(s => 
+        (filterArea === "" || s.area === filterArea) && 
+        (filterLoc === "" || s.ubicacion === filterLoc)
+    );
+
+    // 3. Calcular métricas
+    const total = filteredSheet.length;
+    const done = reportesMaster.filter(r => r.estado === 'CONCLUIDO' && filteredSheet.some(s => s.tag === r.tag_equipo)).length;
+    const pending = reportesMaster.filter(r => r.estado === 'EN DESARROLLO' && filteredSheet.some(s => s.tag === r.tag_equipo)).length;
+    const none = total - done - pending;
+    const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    // 4. Actualizar estadísticas visuales
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-done').textContent = done;
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-none').textContent = none;
+    document.getElementById('chart-percentage').textContent = percent + '%';
+    document.getElementById('chart-progress-path').style.strokeDasharray = `${percent}, 100`;
+    document.getElementById('chart-stats-label').textContent = `${done} de ${total} Equipos Concluidos`;
+
+    // 5. Gestión del contenedor de la tabla
+    const container = document.getElementById('container-pendientes');
+    const pendingListBody = document.getElementById('dashboard-pending-body');
+
+    // Solo mostramos el contenedor si hay registros
+    if (total > 0) {
+        container.classList.remove('hidden');
+        
+        // 6. Renderizar tabla
+        pendingListBody.innerHTML = filteredSheet.map(s => {
+            const rep = reportesMaster.find(r => r.tag_equipo === s.tag);
+            const status = rep ? rep.estado : 'SIN INICIAR';
+            const statusClass = status === 'CONCLUIDO' ? 'text-green-600' : (status === 'EN DESARROLLO' ? 'text-amber-600' : 'text-slate-400');
+            
+            return `
+                <tr class="text-[10px] border-b border-slate-50">
+                    <td class="px-6 py-4 font-black text-[#696158]">${s.tag}</td>
+                    <td class="px-6 py-4 text-[#696158]">${s.area}</td>
+                    <td class="px-6 py-4 text-[#696158]">${s.ubicacion}</td>
+                    <td class="px-6 py-4 font-black uppercase text-[8px] ${statusClass}">${status}</td>
+                </tr>`;
+        }).join('');
+    } else {
+        // Ocultar si no hay nada que mostrar para no dejar un contenedor vacío
+        container.classList.add('hidden');
+        pendingListBody.innerHTML = '';
+    }
+}
+
+
+        function requestDelete(id) { recordToDelete = id; document.getElementById('delete-modal').classList.remove('hidden'); }
+        function cancelDelete() { document.getElementById('delete-modal').classList.add('hidden'); recordToDelete = null; }
+
+        async function executeDelete() {
+            if (!recordToDelete) return;
+            const id = recordToDelete;
+            cancelDelete();
+            showMessage("PROCESANDO ELIMINACIÓN...", "error");
+            try {
+                await _supabase.from('checklists_mantenimiento_ps_migracion').delete().eq('id', id);
+                showMessage("REGISTRO ELIMINADO EXITOSAMENTE", "success");
+                loadHistory();
+            } catch (err) { showMessage(`ERROR: ${err.message}`, "error"); }
+        }
+
+        async function viewChecklist(id, mode = 'view') {
+            document.querySelectorAll('[data-task]').forEach(i => { if(i.type === 'checkbox') i.checked = false; else i.value = ''; });
+            switchTab('form-tab');
+            if(formAuthLock) formAuthLock.classList.add('hidden');
+            const { data: header, error: hError } = await _supabase.from('checklists_mantenimiento_ps_migracion').select('*, historial_modificaciones_ps_migracion(*)').eq('id', id).single();
+            if (hError) return;
+            const { data: resps, error: rError } = await _supabase.from('respuestas_checklist_ps_migracion').select('*').eq('checklist_id', id);
+            if (rError) return;
+            currentRecordData = { header, resps }; 
+            document.getElementById('edit-id').value = id;
+            document.getElementById('record-id-display').textContent = `Doc ID: ${id}`;
+            const isViewMode = mode === 'view' || !currentUser;
+            setFormDisabled(isViewMode);
+            document.getElementById('cancel-edit-btn').classList.toggle('hidden', isViewMode);
+            tagEquipoSelect.value = header.tag_equipo || '';
+            const selected = sheetData.find(s => s.tag === header.tag_equipo);
+            if (selected) { otServicioInput.value = selected.ot; areaEquipoInput.value = selected.area; ubicacionEquipoInput.value = selected.ubicacion; }
+            ['modelo_equipo', 'numero_serie', 'fecha_entrega', 'ejecutado_por_nombre', 'supervisor_nombre', 'estado'].forEach(f => {
+                if (form.elements[f]) form.elements[f].value = header[f] || '';
+            });
+            const empVal = header.empresa_cliente || '';
+            if (['Indamax', 'Interno'].includes(empVal)) { empresaDesarrolloSelect.value = empVal; otraEmpresaInput.classList.add('hidden'); } 
+            else { empresaDesarrolloSelect.value = 'Otra'; otraEmpresaInput.value = empVal; otraEmpresaInput.classList.remove('hidden'); }
+            resps.forEach(r => {
+                document.querySelectorAll(`[data-task="${r.tarea_id}"]`).forEach(input => {
+                    const field = input.dataset.field;
+                    if (input.type === 'checkbox') input.checked = r[field];
+                    else input.value = r[field] || '';
+                });
+            });
+            renderTimeline(header.historial_modificaciones_ps_migracion || []);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+            const eid = document.getElementById('edit-id').value;
+            submitBtn.disabled = true;
+            try {
+                let empresaFinal = empresaDesarrolloSelect.value === 'Otra' ? otraEmpresaInput.value : empresaDesarrolloSelect.value;
+                const header = {
+                    tag_equipo: tagEquipoSelect.value,
+                    modelo_equipo: form.elements['modelo_equipo'].value,
+                    numero_serie: form.elements['numero_serie'].value,
+                    empresa_cliente: empresaFinal,
+                    fecha_entrega: form.elements['fecha_entrega'].value,
+                    ejecutado_por_nombre: form.elements['ejecutado_por_nombre'].value,
+                    supervisor_nombre: form.elements['supervisor_nombre'].value,
+                    estado: form.elements['estado'].value
+                };
+
+                let auditoriaText = eid ? "" : "Creación inicial del reporte técnico.";
+                if (eid && currentRecordData) {
+                    let cambios = [];
+                    const labels = {tag_equipo:'Tag del Equipo', modelo_equipo:'Modelo', numero_serie:'N° de Serie', empresa_cliente:'Empresa', fecha_entrega:'Fecha de Entrega', ejecutado_por_nombre:'Técnico Ejecutor', supervisor_nombre:'Supervisor QA/QC', estado:'Estado'};
+                    for(let key in labels) {
+                        let oldVal = currentRecordData.header[key] || 'Vacío';
+                        let newVal = header[key] || 'Vacío';
+                        if (oldVal != newVal) cambios.push(`${labels[key]}: de "${oldVal}" a "${newVal}"`);
+                    }
+
+                    const currentResponses = [];
+                    const processedTids = new Set();
+                    document.querySelectorAll('[data-task]').forEach(input => {
+                        const tid = input.dataset.task;
+                        if (!processedTids.has(tid)) {
+                            const taskGroup = document.querySelectorAll(`[data-task="${tid}"]`);
+                            let row = { tarea_id: parseInt(tid) };
+                            taskGroup.forEach(inp => { row[inp.dataset.field] = inp.type === 'checkbox' ? inp.checked : inp.value; });
+                            currentResponses.push(row);
+                            processedTids.add(tid);
+                        }
+                    });
+
+                    currentResponses.forEach(nuevaResp => {
+                        const viejaResp = currentRecordData.resps.find(r => r.tarea_id === nuevaResp.tarea_id) || {};
+                        const tareaMeta = tareasMaster.find(t => t.id === nuevaResp.tarea_id);
+                        const tNom = tareaMeta ? tareaMeta.descripcion : `Tarea ${nuevaResp.tarea_id}`;
+
+                        let vOld = viejaResp.vb_completado ? 'SI' : 'NO';
+                        let vNew = nuevaResp.vb_completado ? 'SI' : 'NO';
+                        if (viejaResp.vb_completado !== nuevaResp.vb_completado) {
+                            cambios.push(`${tNom}: V°B° de [${vOld}] a [${vNew}]`);
+                        }
+                        ['valor_u', 'valor_v', 'valor_w', 'frec_2', 'volt_2', 'amp_2', 'c_original', 'c_real', 'hr_ventilador'].forEach(campo => {
+                        if (nuevaResp[campo] !== undefined) {
+                        
+                                let oField = viejaResp[campo] || 'Vacío';
+                                let nField = nuevaResp[campo] || 'Vacío';
+                                if (oField != nField) {
+                                    cambios.push(`${tNom} (${campo.toUpperCase()}): de "${oField}" a "${nField}"`);
+                                }
+                            }
+                        });
+                    });
+
+                    auditoriaText = cambios.length > 0 ? "Modificaciones realizadas: <br>" + cambios.join("<br>") : "Se guardó sin cambios detectados.";
+                }
+
+                let cid = eid;
+                if (eid) {
+                    await _supabase.from('checklists_mantenimiento_ps_migracion').update(header).eq('id', eid);
+                    await _supabase.from('historial_modificaciones_ps_migracion').insert([{ checklist_id: eid, usuario_email: currentUser.email, detalles: auditoriaText }]);
+                } else {
+                    const { data } = await _supabase.from('checklists_mantenimiento_ps_migracion').insert([header]).select().single();
+                    cid = data.id;
+                    await _supabase.from('historial_modificaciones_ps_migracion_ps_migracion').insert([{ checklist_id: cid, usuario_email: currentUser.email, detalles: auditoriaText }]);
+                }
+
+                const finalResponses = [];
+                const pTids = new Set();
+                document.querySelectorAll('[data-task]').forEach(input => {
+                    const tid = input.dataset.task;
+                    if (!pTids.has(tid)) {
+                        const group = document.querySelectorAll(`[data-task="${tid}"]`);
+                        let row = { tarea_id: parseInt(tid), checklist_id: cid };
+                        group.forEach(inp => { row[inp.dataset.field] = inp.type === 'checkbox' ? inp.checked : inp.value; });
+                        finalResponses.push(row);
+                        pTids.add(tid);
+                    }
+                });
+
+                if (eid) await _supabase.from('respuestas_checklist_ps_migracion').delete().eq('checklist_id', eid);
+                await _supabase.from('respuestas_checklist_ps_migracion').insert(finalResponses);
+                
+                showMessage("DATOS GUARDADOS CORRECTAMENTE", "success");
+                resetFormToNew(); loadHistory(); switchTab('dashboard-tab');
+            } catch (err) { showMessage(`ERROR: ${err.message}`, "error"); }
+            finally { submitBtn.disabled = false; }
+        });
+
+        function renderForm(secciones, tareas) {
+            sectionsContainer.innerHTML = secciones.map(seccion => `
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-[#696158] p-4 font-black text-white uppercase text-[9px] tracking-widest">${seccion.nombre}</div>
+                    <div class="divide-y divide-slate-50">
+                        ${tareas.filter(t => t.seccion_id === seccion.id).map(tarea => renderTarea(tarea)).join('')}
+                    </div>
+                </div>`).join('');
+        }
+
+
+
+
+       // function renderTarea(tarea) {
+        //    let extra = '';
+        //    const desc = tarea.descripcion.toLowerCase();
+         //   if (desc.includes("anotar secuencia de fases")) {
+         //       extra = `<div class="flex gap-2 mt-3"><input type="text" placeholder="U" data-task="${tarea.id}" data-field="valor_u" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"><input type="text" placeholder="V" data-task="${tarea.id}" data-field="valor_v" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"><input type="text" placeholder="W" data-task="${tarea.id}" data-field="valor_w" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"></div>`;
+         //   } else if (desc.includes("partir en control local")) {
+        //        extra = `<div class="flex gap-2 mt-3"><input type="text" placeholder="Hz" data-task="${tarea.id}" data-field="frec_2" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"><input type="text" placeholder="V" data-task="${tarea.id}" data-field="volt_2" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"><input type="text" placeholder="A" data-task="${tarea.id}" data-field="amp_2" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"></div>`;
+        //    } else if (tarea.tipo_entrada === 'volt_amp') {
+        //        extra = `<div class="flex gap-2 mt-2"><input type="text" placeholder="V" data-task="${tarea.id}" data-field="valor_v" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"><input type="text" placeholder="A" data-task="${tarea.id}" data-field="valor_w" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"></div>`;
+       //     }
+      //      return `<div class="p-5 flex justify-between items-start gap-4"><div class="flex-grow"><p class="text-[11px] font-bold text-slate-600 uppercase leading-tight">${tarea.descripcion}</p>${extra}</div><div class="flex flex-col items-center"><span class="text-[8px] font-black text-slate-300 mb-1">V°B°</span><input type="checkbox" data-task="${tarea.id}" data-field="vb_completado" class="rounded-lg"></div></div>`;
+       // }
+
+       function renderTarea(tarea) {
+    let extra = '';
+    const desc = tarea.descripcion.toLowerCase();
+
+    if (desc.includes("anotar secuencia de fases")) {
+        extra = `<div class="flex gap-2 mt-3"><input type="text" placeholder="U" data-task="${tarea.id}" data-field="valor_u" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"><input type="text" placeholder="V" data-task="${tarea.id}" data-field="valor_v" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"><input type="text" placeholder="W" data-task="${tarea.id}" data-field="valor_w" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"></div>`;
+    } else if (desc.includes("partir en control local")) {
+        extra = `<div class="flex gap-2 mt-3"><input type="text" placeholder="Hz" data-task="${tarea.id}" data-field="frec_2" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"><input type="text" placeholder="V" data-task="${tarea.id}" data-field="volt_2" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"><input type="text" placeholder="A" data-task="${tarea.id}" data-field="amp_2" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"></div>`;
+    } 
+    // --- AQUÍ LA MODIFICACIÓN PARA EL CONDENSADOR ---
+    else if (desc.includes("revisar valor del condensador")) {
+        extra = `<div class="grid grid-cols-2 gap-2 mt-3">
+                    <input type="text" placeholder="Valor Original" data-task="${tarea.id}" data-field="c_original" class="border p-2 rounded-lg text-[10px] bg-slate-50">
+                    <input type="text" placeholder="Valor Real" data-task="${tarea.id}" data-field="c_real" class="border p-2 rounded-lg text-[10px] bg-slate-50">
+                 </div>`;
+    } 
+    // -------------------------------------------------
+
+else if (desc.includes("registrar las horas de funcionamiento del ventilador por panel o pc")) {
+        extra = `<div class="mt-3">
+                    <input type="text" placeholder="Hrs de servicios" data-task="${tarea.id}" data-field="hr_ventilador" class="w-full border p-2 rounded-lg text-[10px] bg-slate-50">
+                 </div>`;
+    }
+
+
+
+    else if (tarea.tipo_entrada === 'volt_amp') {
+        extra = `<div class="flex gap-2 mt-2"><input type="text" placeholder="V" data-task="${tarea.id}" data-field="valor_v" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"><input type="text" placeholder="A" data-task="${tarea.id}" data-field="valor_w" class="flex-1 border p-2 rounded-lg text-[10px] bg-slate-50"></div>`;
+    }
+
+    return `<div class="p-5 flex justify-between items-start gap-4"><div class="flex-grow"><p class="text-[11px] font-bold text-slate-600 uppercase leading-tight">${tarea.descripcion}</p>${extra}</div><div class="flex flex-col items-center"><span class="text-[8px] font-black text-slate-300 mb-1">V°B°</span><input type="checkbox" data-task="${tarea.id}" data-field="vb_completado" class="rounded-lg"></div></div>`;
+}
+
+
+        function renderTimeline(mods) {
+            if (!mods || !mods.length) { reportAuditSection.classList.add('hidden'); return; }
+            reportAuditSection.classList.remove('hidden');
+            const sorted = mods.sort((a,b) => new Date(b.fecha_modificacion) - new Date(a.fecha_modificacion));
+            reportTimeline.innerHTML = sorted.map(m => `
+                <div class="relative pl-6 pb-6 timeline-item">
+                    <div class="absolute left-0 top-1 w-4 h-4 rounded-full border-2 border-[#EA7600] bg-[#EA7600] z-10"></div>
+                    <div class="flex justify-between items-center mb-1"><span class="text-[9px] font-black text-[#696158] uppercase">${m.usuario_email}</span><span class="text-[12px] text-[#EA7600] font-mono">${formatDateFull(m.fecha_modificacion)}</span></div>
+                    <div class="text-[10px] text-[#696158] leading-relaxed break-words">${m.detalles || 'Sin detalles'}</div>
+                </div>`).join('');
+        }
+
+function handleNewChecklistBtn() {
+    // Si no hay usuario, mostramos el modal de login directamente
+    if (!currentUser) {
+        toggleLoginModal();
+    } else {
+        // Si está logueado, procedemos normal
+        resetFormToNew();
+        switchTab('form-tab');
+    }
+}
+
+function inicializarFiltros() {
+    const selectEquipo = document.getElementById('filt-equipo');
+    // Obtenemos los tags únicos desde sheetData
+    const tagsUnicos = [...new Set(sheetData.map(item => item.tag))].filter(t => t);
+    
+    tagsUnicos.sort().forEach(tag => {
+        const opt = document.createElement('option');
+        opt.value = tag;
+        opt.textContent = tag;
+        selectEquipo.appendChild(opt);
+    });
+}
+
+function filtrarHistorial() {
+    const e = document.getElementById('filt-equipo').value;
+    const es = document.getElementById('filt-estado').value;
+
+    const filtrados = reportesMaster.filter(item => {
+        return (e === "" || item.tag_equipo === e) &&
+               (es === "" || item.estado === es);
+    });
+
+    renderTablaHistorial(filtrados);
+}
+
+
+function renderTablaHistorial(data) {
+    const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
+    const isLoggedIn = !!currentUser;
+    const tbody = document.getElementById('history-table-body');
+    
+    tbody.innerHTML = data.map(item => {
+        const lastMod = item.historial_modificaciones_ps_migracion_ps_migracion && item.historial_modificaciones_ps_migracion_ps_migracion.length > 0 
+            ? item.historial_modificaciones_ps_migracion.reduce((prev, current) => (new Date(prev.fecha_modificacion) > new Date(current.fecha_modificacion)) ? prev : current)
+            : null;
+        const lastModText = lastMod ? `${lastMod.usuario_email.split('@')[0]} | ${formatDateFull(lastMod.fecha_modificacion)}` : '---';
+
+        return `
+        <tr class="text-[10px] border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer" onclick="viewChecklist('${item.id}', 'view')">
+            <td class="px-6 py-4 font-mono">${formatDate(item.fecha_creacion)}</td>
+            <td class="px-6 py-4">
+                <div class="font-black text-[#696158]">${item.tag_equipo}</div>
+                <div class="text-[8px] text-[#696158] uppercase tracking-tighter">${item.empresa_cliente || 'N/A'}</div>
+            </td>
+            <td class="px-6 py-4 text-[#696158] font-bold">${lastModText}</td>
+            <td class="px-6 py-4">
+                <span class="px-2 py-1 rounded-md font-black text-[8px] uppercase ${item.estado === 'CONCLUIDO' ? 'bg-green-100 text-green-700' : item.estado === 'EN DESARROLLO' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}">${item.estado}</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+                <div class="flex items-center justify-end gap-3">
+                    <button type="button" onclick="event.stopPropagation(); viewChecklist('${item.id}', 'view')" class="text-[#696158] font-black uppercase text-[8px] tracking-widest hover:underline">Ver Reporte</button>
+                    ${isLoggedIn ? `<button type="button" onclick="event.stopPropagation(); viewChecklist('${item.id}', 'edit')" class="bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg font-black border border-amber-100 uppercase text-[8px] hover:bg-amber-600 hover:text-white transition-all">Editar</button>` : ''}
+                    ${isAdmin ? `<button type="button" onclick="event.stopPropagation(); requestDelete('${item.id}')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-black border border-red-100 uppercase text-[8px] hover:bg-red-600 hover:text-white transition-all">Borrar</button>` : ''}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+
+
+
+
+
+        function setFormDisabled(d) { form.querySelectorAll('input, select, textarea').forEach(i => { i.disabled = d; }); submitBtn.disabled = d || !currentUser; otServicioInput.disabled = true; areaEquipoInput.disabled = true; ubicacionEquipoInput.disabled = true; viewOnlyBadge.classList.toggle('hidden', !d); editIndicator.classList.toggle('hidden', d); }
+        
+        function resetFormToNew() { 
+            form.reset(); 
+            document.getElementById('edit-id').value = ''; 
+            document.getElementById('record-id-display').textContent = ''; 
+            otraEmpresaInput.classList.add('hidden'); 
+            document.getElementById('cancel-edit-btn').classList.add('hidden'); 
+            currentRecordData = null; 
+            reportAuditSection.classList.add('hidden');
+            reportTimeline.innerHTML = '';
+            
+            document.querySelectorAll('[data-task]').forEach(i => { if(i.type === 'checkbox') i.checked = false; else i.value = ''; }); 
+            if (currentUser) { formAuthLock.classList.add('hidden'); setFormDisabled(false); } 
+            else { formAuthLock.classList.remove('hidden'); setFormDisabled(true); } 
+        }
+        
+        function showMessage(t, type) { msgBox.innerHTML = t; msgBox.className = `p-4 rounded-xl mb-6 text-[10px] font-black border-l-4 ${type === 'success' ? 'bg-green-50 text-green-800 border-green-400' : 'bg-red-50 text-red-800 border-red-400'}`; msgBox.classList.remove('hidden'); if (type === 'success') setTimeout(() => msgBox.classList.add('hidden'), 5000); }
+
+        empresaDesarrolloSelect.addEventListener('change', () => { otraEmpresaInput.classList.toggle('hidden', empresaDesarrolloSelect.value !== 'Otra'); });
+        window.onload = checkSession;
+    </script>
+</body>
+</html>
