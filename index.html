@@ -387,6 +387,15 @@
                             </div>
                         </div>
                     </div>
+
+                    <div id="sections-container" class="space-y-8"></div>
+                    
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 mt-8">
+                        <h2 class="text-xs font-black mb-4 text-[#696158] uppercase tracking-widest border-b border-slate-50 pb-4">Observaciones Adicionales</h2>
+                        <textarea name="comentarios_adicionales" id="comentarios_adicionales" rows="4" class="block w-full rounded-xl border-slate-200 bg-slate-50 p-3 border font-bold text-slate-700 outline-none text-[10px]" placeholder="Ingrese observaciones, anomalías o comentarios generales del servicio..."></textarea>
+                    </div>
+
+
                     <div id="sections-container" class="space-y-8"></div>
                     <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
                         <h2 class="text-xs font-black mb-6 text-[#696158] uppercase tracking-widest border-b border-slate-50 pb-4">Responsables</h2>
@@ -738,7 +747,7 @@ async function loadHistory() {
             tagEquipoSelect.value = header.tag_equipo || '';
             const selected = sheetData.find(s => s.tag === header.tag_equipo);
             if (selected) { otServicioInput.value = selected.ot; areaEquipoInput.value = selected.area; ubicacionEquipoInput.value = selected.ubicacion; }
-            ['modelo_equipo', 'numero_serie', 'fecha_entrega', 'ejecutado_por_nombre', 'supervisor_nombre', 'estado'].forEach(f => {
+            ['modelo_equipo', 'numero_serie', 'fecha_entrega', 'ejecutado_por_nombre', 'supervisor_nombre', 'estado', 'comentarios_adicionales'].forEach(f => {
                 if (form.elements[f]) form.elements[f].value = header[f] || '';
             });
             const empVal = header.empresa_cliente || '';
@@ -769,13 +778,14 @@ async function loadHistory() {
                     fecha_entrega: form.elements['fecha_entrega'].value,
                     ejecutado_por_nombre: form.elements['ejecutado_por_nombre'].value,
                     supervisor_nombre: form.elements['supervisor_nombre'].value,
-                    estado: form.elements['estado'].value
+                    estado: form.elements['estado'].value,
+                    comentarios_adicionales: form.elements['comentarios_adicionales'].value
                 };
 
                 let auditoriaText = eid ? "" : "Creación inicial del reporte técnico.";
                 if (eid && currentRecordData) {
                     let cambios = [];
-                    const labels = {tag_equipo:'Tag del Equipo', modelo_equipo:'Modelo', numero_serie:'N° de Serie', empresa_cliente:'Empresa', fecha_entrega:'Fecha de Entrega', ejecutado_por_nombre:'Técnico Ejecutor', supervisor_nombre:'Supervisor QA/QC', estado:'Estado'};
+                    const labels = {tag_equipo:'Tag del Equipo', modelo_equipo:'Modelo', numero_serie:'N° de Serie', empresa_cliente:'Empresa', fecha_entrega:'Fecha de Entrega', ejecutado_por_nombre:'Técnico Ejecutor', supervisor_nombre:'Supervisor QA/QC', estado:'Estado', comentarios_adicionales:'Observaciones'};
                     for(let key in labels) {
                         let oldVal = currentRecordData.header[key] || 'Vacío';
                         let newVal = header[key] || 'Vacío';
