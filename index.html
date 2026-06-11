@@ -857,15 +857,18 @@ async function loadHistory() {
                     auditoriaText = cambios.length > 0 ? "Modificaciones realizadas: <br>" + cambios.join("<br>") : "Se guardó sin cambios detectados.";
                 }
 
-                let cid = eid;
+               let cid = eid;
                 if (eid) {
                     await _supabase.from('checklists_mantenimiento_ps_migracion').update(header).eq('id', eid);
                     await _supabase.from('historial_modificaciones_ps_migracion').insert([{ checklist_id: eid, usuario_email: currentUser.email, detalles: auditoriaText }]);
                 } else {
-                    const { data } = await _supabase.from('checklists_mantenimiento_ps_migracion').insert([header]).select().single();
+                    const { data, error: insertError } = await _supabase.from('checklists_mantenimiento_ps_migracion').insert([header]).select().single();
+                    if (insertError) throw insertError;
                     cid = data.id;
                     await _supabase.from('historial_modificaciones_ps_migracion').insert([{ checklist_id: cid, usuario_email: currentUser.email, detalles: auditoriaText }]);
                 }
+				
+		
 
                 const finalResponses = [];
                 const pTids = new Set();
@@ -880,18 +883,11 @@ async function loadHistory() {
                     }
                 });
 
-				if (eid) {
-                    // Si es edición, usamos upsert resolviendo el conflicto por la clave compuesta
-                    await _supabase
-                        .from('respuestas_checklist_ps_migracion')
-                        .upsert(finalResponses, { onConflict: 'checklist_id,tarea_id' });
-                } else {
-                    // Si es un registro completamente nuevo, inserta normalmente
-                    await _supabase
-                        .from('respuestas_checklist_ps_migracion')
-                        .insert(finalResponses);
-                }
-				
+				const { error: upsertError } = await _supabase
+                    .from('respuestas_checklist_ps_migracion')
+                    .upsert(finalResponses, { onConflict: 'checklist_id,tarea_id' });
+                
+                if (upsertError) throw upsertError;
                 
                 showMessage("DATOS GUARDADOS CORRECTAMENTE", "success");
                 resetFormToNew(); loadHistory(); switchTab('dashboard-tab');
